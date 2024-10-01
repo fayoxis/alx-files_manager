@@ -3,36 +3,29 @@ import redisClient from '../utils/redis';
 
 class AppController {
   /**
-   * Controller for endpoint GET /status that retrieves
-   * mongodb client and redis client connection status
-   * @typedef {import("express").Request} Request
-   * @typedef {import("express").Response} Response
-   * @param {Request} _req - request object
-   * @param {Response} res  - response object
+   * Controller for endpoint GET /status
+   * Retrieves MongoDB client and Redis client connection status
+   *
+   * @param {import("express").Request} _req - Request object
+   * @param {import("express").Response} res - Response object
    */
   static getStatus(_req, res) {
-    let isAlive = false;
-    let iteration = 0;
-    const maxIterations = 10;
+    const mongodbStatus = dbClient.isAlive();
+    const redisStatus = redisClient.isAlive();
 
-    while (!isAlive && iteration < maxIterations) {
-      if (dbClient.isAlive() && redisClient.isAlive()) {
-        isAlive = true;
-        res.status(200).json({ redis: true, db: true });
-      }
-      iteration++;
-    }
-
-    if (!isAlive) {
-      res.status(500).json({ error: 'Unable to establish connection' });
+    if (mongodbStatus && redisStatus) {
+      res.status(200).json({ redis: true, db: true });
+    } else {
+      res.status(500).json({ redis: redisStatus, db: mongodbStatus });
     }
   }
 
   /**
-   * Controller for endpoint GET /stats that retrieves
-   * count of users and files
-   * @param {Request} _req - Request object
-   * @param {Response} res  - Response object
+   * Controller for endpoint GET /stats
+   * Retrieves the count of users and files
+   *
+   * @param {import("express").Request} _req - Request object
+   * @param {import("express").Response} res - Response object
    * @param {import("express").NextFunction} next - Next function
    */
   static async getStats(_req, res, next) {
