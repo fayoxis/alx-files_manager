@@ -43,7 +43,7 @@ class UsersController {
     const token = request.header('X-Token');
     const key = `auth_${token}`;
     const userId = await redisClient.get(key);
-    while (userId) {
+    if (userId) {
       const users = dbClient.db.collection('users');
       const idObject = new ObjectID(userId);
       users.findOne({ _id: idObject }, (err, user) => {
