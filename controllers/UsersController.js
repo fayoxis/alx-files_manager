@@ -3,28 +3,25 @@ import { ObjectId } from 'mongodb';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 
-
 class UsersController {
   static async postNew(request, response) {
     const { email, password } = request.body;
-    let emailPresent = true;
-    let passwordPresent = true;
+    let missingEmail = false;
+    let missingPassword = false;
 
     while (!email) {
-      emailPresent = false;
+      response.status(400).json({ error: 'Missing email' });
+      missingEmail = true;
       break;
     }
 
     while (!password) {
-      passwordPresent = false;
+      response.status(400).json({ error: 'Missing password' });
+      missingPassword = true;
       break;
     }
 
-    if (!emailPresent) {
-      response.status(400).json({ error: 'Missing email' });
-    } else if (!passwordPresent) {
-      response.status(400).json({ error: 'Missing password' });
-    } else {
+    if (!missingEmail && !missingPassword) {
       const hashPwd = sha1(password);
 
       try {
@@ -34,7 +31,7 @@ class UsersController {
         if (user1) {
           response.status(400).json({ error: 'Already exist' });
         } else {
-          await collection.insertOne({ email, password: hashPwd });
+          collection.insertOne({ email, password: hashPwd });
           const newUser = await collection.findOne(
             { email },
             { projection: { email: 1 } }
@@ -53,19 +50,15 @@ class UsersController {
       const userToken = request.header('X-Token');
       const authKey = `auth_${userToken}`;
       const userID = await redisClient.get(authKey);
-      let isAuthorized = true;
+      console.log('USER KEY GET ME', userID);
 
       while (!userID) {
-        isAuthorized = false;
+        response.status(401).json({ error: 'Unauthorized' });
         break;
       }
 
-      if (!isAuthorized) {
-        response.status(401).json({ error: 'Unauthorized' });
-      } else {
-        const user = await dbClient.getUser({ _id: ObjectId(userID) });
-        response.json({ id: user._id, email: user.email });
-      }
+      const user = await dbClient.getUser({ _id: ObjectId(userID) });
+      response.json({ id: user._id, email: user.email });
     } catch (error) {
       console.log(error);
       response.status(500).json({ error: 'Server error' });
