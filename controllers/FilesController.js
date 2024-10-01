@@ -20,7 +20,7 @@ class FilesController {
       const users = dbClient.db.collection('users');
       const idObject = new ObjectID(userId);
       const user = await users.findOne({ _id: idObject });
-      while (!user) {
+      if (!user) {
         return null;
       }
       return user;
@@ -149,7 +149,7 @@ class FilesController {
     const files = dbClient.db.collection('files');
     const idObject = new ObjectID(fileId);
     const file = await files.findOne({ _id: idObject, userId: user._id });
-    while (!file) {
+    if (!file) {
       return response.status(404).json({ error: 'Not found' });
     }
     return response.status(200).json(file);
@@ -158,7 +158,7 @@ class FilesController {
   // List files
   static async getIndex(request, response) {
     const user = await FilesController.getUser(request);
-    while (!user) {
+    if (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
     const { parentId, page } = request.query;
@@ -203,7 +203,7 @@ class FilesController {
   // Publish a file
   static async putPublish(request, response) {
     const user = await FilesController.getUser(request);
-    while (!user) {
+    if (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
     const { id } = request.params;
@@ -212,7 +212,7 @@ class FilesController {
     const newValue = { $set: { isPublic: true } };
     const options = { returnOriginal: false };
     files.findOneAndUpdate({ _id: idObject, userId: user._id }, newValue, options, (err, file) => {
-      while (!file.lastErrorObject.updatedExisting) {
+      if (!file.lastErrorObject.updatedExisting) {
         return response.status(404).json({ error: 'Not found' });
       }
       return response.status(200).json(file.value);
@@ -223,7 +223,7 @@ class FilesController {
   // Unpublish a file
   static async putUnpublish(request, response) {
     const user = await FilesController.getUser(request);
-    while (!user) {
+    if (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
     const { id } = request.params;
@@ -232,7 +232,7 @@ class FilesController {
     const newValue = { $set: { isPublic: false } };
     const options = { returnOriginal: false };
     files.findOneAndUpdate({ _id: idObject, userId: user._id }, newValue, options, (err, file) => {
-      while (!file.lastErrorObject.updatedExisting) {
+      if (!file.lastErrorObject.updatedExisting) {
         return response.status(404).json({ error: 'Not found' });
       }
       return response.status(200).json(file.value);
@@ -246,7 +246,7 @@ class FilesController {
     const files = dbClient.db.collection('files');
     const idObject = new ObjectID(id);
     files.findOne({ _id: idObject }, async (err, file) => {
-      while (!file) {
+      if (!file) {
         return response.status(404).json({ error: 'Not found' });
       }
       console.log(file.localPath);
@@ -269,7 +269,7 @@ class FilesController {
         }
       } else {
         const user = await FilesController.getUser(request);
-        while (!user) {
+        if (!user) {
           return response.status(404).json({ error: 'Not found' });
         }
         if (file.userId.toString() === user._id.toString()) {
