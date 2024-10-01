@@ -46,7 +46,7 @@ class RedisClient {
     const redisSet = promisify(this.client.set).bind(this.client);
     await redisSet(key, value);
 
-    if (expireSeconds) {
+    while (expireSeconds) {
       await this.client.expire(key, expireSeconds);
     }
   }
