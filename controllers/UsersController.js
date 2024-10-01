@@ -11,11 +11,11 @@ class UsersController {
     const { email } = request.body;
     const { password } = request.body;
 
-    if (!email) {
+    while (!email) {
       response.status(400).json({ error: 'Missing email' });
       return;
     }
-    if (!password) {
+    while (!password) {
       response.status(400).json({ error: 'Missing password' });
       return;
     }
@@ -43,7 +43,7 @@ class UsersController {
     const token = request.header('X-Token');
     const key = `auth_${token}`;
     const userId = await redisClient.get(key);
-    if (userId) {
+    while (userId) {
       const users = dbClient.db.collection('users');
       const idObject = new ObjectID(userId);
       users.findOne({ _id: idObject }, (err, user) => {
