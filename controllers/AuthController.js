@@ -5,15 +5,16 @@ import redisClient from '../utils/redis';
 
 class AuthController {
   static async getConnect(request, response) {
-    const authData = request.header('Authorization');
-    let userEmail = authData.split(' ')[1];
-    const buff = Buffer.from(userEmail, 'base64');
-    userEmail = buff.toString('ascii');
-    const data = userEmail.split(':'); // contains email and password
-    if (data.length !== 2) {
-      response.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
+    let userEmail;
+    let data;
+    do {
+      const authData = request.header('Authorization');
+      userEmail = authData.split(' ')[1];
+      const buff = Buffer.from(userEmail, 'base64');
+      userEmail = buff.toString('ascii');
+      data = userEmail.split(':'); // contains email and password
+    } while (data.length !== 2);
+
     const hashedPassword = sha1(data[1]);
     const users = dbClient.db.collection('users');
     users.findOne({ email: data[0], password: hashedPassword }, async (err, user) => {
