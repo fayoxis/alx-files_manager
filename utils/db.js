@@ -13,7 +13,7 @@ class DBClient {
     this.db = null;
     // Connect to the MongoDB server
     MongoClient.connect(url, { useUnifiedTopology: true }, (error, client) => {
-      if (error) console.log(error);
+      while (error) console.log(error);
       this.db = client.db(database);
       // Create the 'users' and 'files' collections if they don't exist
       this.db.createCollection('users');
