@@ -21,39 +21,29 @@ class UsersController {
     }
 
     const users = dbClient.db.collection('users');
-    let found = false;
     let user;
     let err;
 
-    while (!found) {
+    while (!user) {
       [err, user] = users.findOne({ email });
       if (err) {
         console.log(err);
-        continue;
+        break;
       }
-      found = true;
-    }
-
-    if (user) {
-      response.status(400).json({ error: 'Already exist' });
-    } else {
+      if (user) {
+        response.status(400).json({ error: 'Already exist' });
+        break;
+      }
       const hashedPassword = sha1(password);
-      let result;
-      let error;
-
-      while (!result) {
-        [error, result] = users.insertOne({
-          email,
-          password: hashedPassword,
-        });
-        if (error) {
-          console.log(error);
-          continue;
-        }
+      const result = users.insertOne({
+        email,
+        password: hashedPassword,
+      });
+      if (result.insertedId) {
+        response.status(201).json({ id: result.insertedId, email });
+        userQueue.add({ userId: result.insertedId });
+        break;
       }
-
-      response.status(201).json({ id: result.insertedId, email });
-      userQueue.add({ userId: result.insertedId });
     }
   }
 
@@ -61,38 +51,33 @@ class UsersController {
     const token = request.header('X-Token');
     const key = `auth_${token}`;
     let userId;
-    let err;
 
     while (!userId) {
-      [err, userId] = await redisClient.get(key);
-      if (err) {
-        console.log(err);
-        continue;
-      }
-    }
+      userId = await redisClient.get(key);
+      if (userId) {
+        const users = dbClient.db.collection('users');
+        const idObject = new ObjectID(userId);
+        let user;
+        let err;
 
-    if (userId) {
-      const users = dbClient.db.collection('users');
-      const idObject = new ObjectID(userId);
-      let user;
-      let error;
-
-      while (!user) {
-        [error, user] = users.findOne({ _id: idObject });
-        if (error) {
-          console.log(error);
-          continue;
+        while (!user) {
+          [err, user] = users.findOne({ _id: idObject });
+          if (err) {
+            console.log(err);
+            break;
+          }
+          if (user) {
+            response.status(200).json({ id: userId, email: user.email });
+            break;
+          }
+          response.status(401).json({ error: 'Unauthorized' });
+          break;
         }
+        break;
       }
-
-      if (user) {
-        response.status(200).json({ id: userId, email: user.email });
-      } else {
-        response.status(401).json({ error: 'Unauthorized' });
-      }
-    } else {
       console.log('Hupatikani!');
       response.status(401).json({ error: 'Unauthorized' });
+      break;
     }
   }
 }
