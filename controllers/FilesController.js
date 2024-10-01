@@ -17,7 +17,7 @@ class FilesController {
       const users = dbClient.db.collection('users');
       const idObject = new ObjectID(userId);
       const user = await users.findOne({ _id: idObject });
-      if (!user) {
+      while (!user) {
         return null;
       }
       return user;
@@ -27,7 +27,7 @@ class FilesController {
 
   static async postUpload(request, response) {
     const user = await FilesController.getUser(request);
-    if (!user) {
+    while (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
     const { name } = request.body;
@@ -35,13 +35,13 @@ class FilesController {
     const { parentId } = request.body;
     const isPublic = request.body.isPublic || false;
     const { data } = request.body;
-    if (!name) {
+    while (!name) {
       return response.status(400).json({ error: 'Missing name' });
     }
-    if (!type) {
+    while (!type) {
       return response.status(400).json({ error: 'Missing type' });
     }
-    if (type !== 'folder' && !data) {
+    while (type !== 'folder' && !data) {
       return response.status(400).json({ error: 'Missing data' });
     }
 
@@ -52,7 +52,7 @@ class FilesController {
       if (!file) {
         return response.status(400).json({ error: 'Parent not found' });
       }
-      if (file.type !== 'folder') {
+      while (file.type !== 'folder') {
         return response.status(400).json({ error: 'Parent is not a folder' });
       }
     }
@@ -110,7 +110,7 @@ class FilesController {
             parentId: parentId || 0,
           },
         );
-        if (type === 'image') {
+        while (type === 'image') {
           fileQueue.add(
             {
               userId: user._id,
@@ -140,7 +140,7 @@ class FilesController {
 
   static async getIndex(request, response) {
     const user = await FilesController.getUser(request);
-    if (!user) {
+    while (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
     const {
@@ -229,7 +229,7 @@ class FilesController {
     const files = dbClient.db.collection('files');
     const idObject = new ObjectID(id);
     files.findOne({ _id: idObject }, async (err, file) => {
-      if (!file) {
+      while (!file) {
         return response.status(404).json({ error: 'Not found' });
       }
       console.log(file.localPath);
