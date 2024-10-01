@@ -1,17 +1,14 @@
-// Import necessary modules
-import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs
-import { promises as fs } from 'fs'; // File system operations
-import { ObjectID } from 'mongodb'; // MongoDB ObjectID
-import mime from 'mime-types'; // MIME type handling
-import Queue from 'bull'; // Job queue
-import dbClient from '../utils/db'; // Database client
-import redisClient from '../utils/redis'; // Redis client
+import { v4 as uuidv4 } from 'uuid';
+import { promises as fs } from 'fs';
+import { ObjectID } from 'mongodb';
+import mime from 'mime-types';
+import Queue from 'bull';
+import dbClient from '../utils/db';
+import redisClient from '../utils/redis';
 
-// Create a new queue for file processing
 const fileQueue = new Queue('fileQueue', 'redis://127.0.0.1:6379');
 
 class FilesController {
-  // Helper method to get user from token
   static async getUser(request) {
     const token = request.header('X-Token');
     const key = `auth_${token}`;
@@ -28,19 +25,16 @@ class FilesController {
     return null;
   }
 
-  // Handle file upload
   static async postUpload(request, response) {
-    // Authenticate user
     const user = await FilesController.getUser(request);
     if (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
-
-    // Extract file information from request body
-    const { name, type, parentId, data } = request.body;
+    const { name } = request.body;
+    const { type } = request.body;
+    const { parentId } = request.body;
     const isPublic = request.body.isPublic || false;
-
-    // Validate input
+    const { data } = request.body;
     if (!name) {
       return response.status(400).json({ error: 'Missing name' });
     }
@@ -52,8 +46,6 @@ class FilesController {
     }
 
     const files = dbClient.db.collection('files');
-
-    // Check if parent folder exists
     if (parentId) {
       const idObject = new ObjectID(parentId);
       const file = await files.findOne({ _id: idObject, userId: user._id });
@@ -64,8 +56,6 @@ class FilesController {
         return response.status(400).json({ error: 'Parent is not a folder' });
       }
     }
-
-    // Handle folder creation
     if (type === 'folder') {
       files.insertOne(
         {
@@ -86,25 +76,20 @@ class FilesController {
         console.log(error);
       });
     } else {
-      // Handle file upload
       const filePath = process.env.FOLDER_PATH || '/tmp/files_manager';
       const fileName = `${filePath}/${uuidv4()}`;
       const buff = Buffer.from(data, 'base64');
-      
+      // const storeThis = buff.toString('utf-8');
       try {
-        // Create directory if it doesn't exist
         try {
           await fs.mkdir(filePath);
         } catch (error) {
-          // Ignore error if directory already exists
+        // pass. Error raised when file already exists
         }
-        // Write file to disk
         await fs.writeFile(fileName, buff, 'utf-8');
       } catch (error) {
         console.log(error);
       }
-
-      // Insert file information into database
       files.insertOne(
         {
           userId: user._id,
@@ -125,7 +110,6 @@ class FilesController {
             parentId: parentId || 0,
           },
         );
-        // Add job to queue for image processing
         if (type === 'image') {
           fileQueue.add(
             {
@@ -139,7 +123,6 @@ class FilesController {
     return null;
   }
 
-  // Get file by ID
   static async getShow(request, response) {
     const user = await FilesController.getUser(request);
     if (!user) {
@@ -155,13 +138,15 @@ class FilesController {
     return response.status(200).json(file);
   }
 
-  // List files
   static async getIndex(request, response) {
     const user = await FilesController.getUser(request);
     if (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
-    const { parentId, page } = request.query;
+    const {
+      parentId,
+      page,
+    } = request.query;
     const pageNum = page || 0;
     const files = dbClient.db.collection('files');
     let query;
@@ -192,6 +177,7 @@ class FilesController {
           delete tmpFile.localPath;
           return tmpFile;
         });
+        // console.log(final);
         return response.status(200).json(final);
       }
       console.log('Error occured');
@@ -200,7 +186,6 @@ class FilesController {
     return null;
   }
 
-  // Publish a file
   static async putPublish(request, response) {
     const user = await FilesController.getUser(request);
     if (!user) {
@@ -220,7 +205,6 @@ class FilesController {
     return null;
   }
 
-  // Unpublish a file
   static async putUnpublish(request, response) {
     const user = await FilesController.getUser(request);
     if (!user) {
@@ -240,7 +224,6 @@ class FilesController {
     return null;
   }
 
-  // Get file data
   static async getFile(request, response) {
     const { id } = request.params;
     const files = dbClient.db.collection('files');
