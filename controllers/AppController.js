@@ -11,8 +11,20 @@ class AppController {
    * @param {Response} res  - response object
    */
   static getStatus(_req, res) {
-    if (dbClient.isAlive() && redisClient.isAlive()) {
-      res.status(200).json({ redis: true, db: true });
+    let isAlive = false;
+    let iteration = 0;
+    const maxIterations = 10;
+
+    while (!isAlive && iteration < maxIterations) {
+      if (dbClient.isAlive() && redisClient.isAlive()) {
+        isAlive = true;
+        res.status(200).json({ redis: true, db: true });
+      }
+      iteration++;
+    }
+
+    if (!isAlive) {
+      res.status(500).json({ error: 'Unable to establish connection' });
     }
   }
 
