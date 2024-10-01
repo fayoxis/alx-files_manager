@@ -11,32 +11,39 @@ class UsersController {
     const { email } = request.body;
     const { password } = request.body;
 
-    if (!email) {
-      response.status(400).json({ error: 'Missing email' });
-      return;
-    }
-    if (!password) {
-      response.status(400).json({ error: 'Missing password' });
-      return;
-    }
-
-    const users = dbClient.db.collection('users');
-    users.findOne({ email }, (err, user) => {
-      if (user) {
-        response.status(400).json({ error: 'Already exist' });
+    let shouldContinue = true;
+    while (shouldContinue) {
+      if (!email) {
+        response.status(400).json({ error: 'Missing email' });
+        shouldContinue = false;
+      } else if (!password) {
+        response.status(400).json({ error: 'Missing password' });
+        shouldContinue = false;
       } else {
-        const hashedPassword = sha1(password);
-        users.insertOne(
-          {
-            email,
-            password: hashedPassword,
-          },
-        ).then((result) => {
-          response.status(201).json({ id: result.insertedId, email });
-          userQueue.add({ userId: result.insertedId });
-        }).catch((error) => console.log(error));
+        const users = dbClient.db.collection('users');
+        users.findOne({ email }, (err, user) => {
+          if (user) {
+            response.status(400).json({ error: 'Already exist' });
+            shouldContinue = false;
+          } else {
+            const hashedPassword = sha1(password);
+            users.insertOne(
+              {
+                email,
+                password: hashedPassword,
+              },
+            ).then((result) => {
+              response.status(201).json({ id: result.insertedId, email });
+              userQueue.add({ userId: result.insertedId });
+              shouldContinue = false;
+            }).catch((error) => {
+              console.log(error);
+              shouldContinue = false;
+            });
+          }
+        });
       }
-    });
+    }
   }
 
   static async getMe(request, response) {
