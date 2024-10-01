@@ -29,7 +29,7 @@ class RedisClient {
     await this.client.expire(key, time);
   }
 
-  // this Removes the key-value pair associated with the given key
+  // this Removes the key-value pair associated with key
   async del(key) {
     await this.delAsync(key);
   }
