@@ -32,7 +32,7 @@ class FilesController {
   static async postUpload(request, response) {
     // Authenticate user
     const user = await FilesController.getUser(request);
-    while (!user) {
+    if (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
 
@@ -41,13 +41,13 @@ class FilesController {
     const isPublic = request.body.isPublic || false;
 
     // Validate input
-    while (!name) {
+    if (!name) {
       return response.status(400).json({ error: 'Missing name' });
     }
-    while (!type) {
+    if (!type) {
       return response.status(400).json({ error: 'Missing type' });
     }
-    while (type !== 'folder' && !data) {
+    if (type !== 'folder' && !data) {
       return response.status(400).json({ error: 'Missing data' });
     }
 
@@ -57,10 +57,10 @@ class FilesController {
     if (parentId) {
       const idObject = new ObjectID(parentId);
       const file = await files.findOne({ _id: idObject, userId: user._id });
-      while (!file) {
+      if (!file) {
         return response.status(400).json({ error: 'Parent not found' });
       }
-      while (file.type !== 'folder') {
+      if (file.type !== 'folder') {
         return response.status(400).json({ error: 'Parent is not a folder' });
       }
     }
@@ -126,7 +126,7 @@ class FilesController {
           },
         );
         // Add job to queue for image processing
-        while (type === 'image') {
+        if (type === 'image') {
           fileQueue.add(
             {
               userId: user._id,
