@@ -8,13 +8,13 @@ import app from '../server';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 
+// Use chai-http middleware for making HTTP requests
 use(chaiHttp);
 should();
 
-// User Endpoints ==============================================
 
 describe('testing User Endpoints', () => {
-  const credentials = 'Basic Ym9iQGR5bGFuLmNvbTp0b3RvMTIzNCE=';
+  const credentials = 'Basic Ym9iQGR5bGFuLmNvbTp0b3RvMTIzNCE='; // Base64 encoded credentials
   let token = '';
   let userId = '';
   const user = {
@@ -22,20 +22,22 @@ describe('testing User Endpoints', () => {
     password: 'toto1234!',
   };
 
+  // Clear Redis cache and MongoDB collections before each test suite
   before(async () => {
     await redisClient.client.flushall('ASYNC');
     await dbClient.usersCollection.deleteMany({});
     await dbClient.filesCollection.deleteMany({});
   });
 
+  // Clear Redis cache and MongoDB collections after each test suite
   after(async () => {
     await redisClient.client.flushall('ASYNC');
     await dbClient.usersCollection.deleteMany({});
     await dbClient.filesCollection.deleteMany({});
   });
 
-  // users
-  describe('pOST /users', () => {
+  // Test cases for POST /users endpoint
+  describe('POST /users', () => {
     it('returns the id and email of created user', async () => {
       const response = await request(app).post('/users').send(user);
       const body = JSON.parse(response.text);
@@ -82,9 +84,8 @@ describe('testing User Endpoints', () => {
     });
   });
 
-  // Connect
-
-  describe('gET /connect', () => {
+  // Test cases for GET /connect endpoint
+  describe('GET /connect', () => {
     it('fails if no user is found for credentials', async () => {
       const response = await request(app).get('/connect').send();
       const body = JSON.parse(response.text);
@@ -116,14 +117,13 @@ describe('testing User Endpoints', () => {
     });
   });
 
-  // Disconnect
-
-  describe('gET /disconnect', () => {
+  // Test cases for GET /disconnect endpoint
+  describe('GET /disconnect', () => {
     after(async () => {
       await redisClient.client.flushall('ASYNC');
     });
 
-    it('should responde with unauthorized because there is no token for user', async () => {
+    it('should respond with unauthorized because there is no token for user', async () => {
       const response = await request(app).get('/disconnect').send();
       const body = JSON.parse(response.text);
       expect(body).to.eql({ error: 'Unauthorized' });
@@ -145,7 +145,8 @@ describe('testing User Endpoints', () => {
     });
   });
 
-  describe('gET /users/me', () => {
+  // Test cases for GET /users/me endpoint
+  describe('GET /users/me', () => {
     before(async () => {
       const response = await request(app)
         .get('/connect')
@@ -163,7 +164,7 @@ describe('testing User Endpoints', () => {
       expect(response.statusCode).to.equal(401);
     });
 
-    it('should retrieve the user base on the token used', async () => {
+    it('should retrieve the user based on the token used', async () => {
       const response = await request(app)
         .get('/users/me')
         .set('X-Token', token)
