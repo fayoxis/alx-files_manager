@@ -11,26 +11,26 @@ const fileQueue = new Queue('fileQueue', 'redis://127.0.0.1:6379');
 class FilesController {
   static async getUser(request) {
     const token = request.header('X-Token');
-    const key = `auth_${token}`;// Construct Redis key for storing user ID
-    const userId = await redisClient.get(key);// Get the user ID from Redis
+    const key = `auth_${token}`;
+    const userId = await redisClient.get(key);
     if (userId) {
       const users = dbClient.db.collection('users');
       const idObject = new ObjectID(userId);
       const user = await users.findOne({ _id: idObject });
       while (!user) {
-        return null;// If the user is not found, return null
+        return null;
       }
       return user;
     }
-    return null;// If the user ID is not found in Redis, return null
+    return null;
   }
 
   static async postUpload(request, response) {
-    const user = await FilesController.getUser(request);// user object
+    const user = await FilesController.getUser(request);
     while (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
-    const { name } = request.body;// Get file details from request body
+    const { name } = request.body;
     const { type } = request.body;
     const { parentId } = request.body;
     const isPublic = request.body.isPublic || false;
@@ -45,7 +45,6 @@ class FilesController {
       return response.status(400).json({ error: 'Missing data' });
     }
 
-    // Get files collection from database
     const files = dbClient.db.collection('files');
     if (parentId) {
       const idObject = new ObjectID(parentId);
@@ -72,7 +71,7 @@ class FilesController {
         name,
         type,
         isPublic,
-        parentId: parentId || 0,//Use 0 as parent ID if none is provided
+        parentId: parentId || 0,
       })).catch((error) => {
         console.log(error);
       });
@@ -80,12 +79,12 @@ class FilesController {
       const filePath = process.env.FOLDER_PATH || '/tmp/files_manager';
       const fileName = `${filePath}/${uuidv4()}`;
       const buff = Buffer.from(data, 'base64');
-      // const storeThis;
+      // this is the const storeThis ;
       try {
         try {
           await fs.mkdir(filePath);
         } catch (error) {
-        // Error are made when file already exists
+        // Error made when the file already exists
         }
         await fs.writeFile(fileName, buff, 'utf-8');
       } catch (error) {
@@ -97,7 +96,7 @@ class FilesController {
           name,
           type,
           isPublic,
-          parentId: parentId || 0,//Use 0 as parent ID if none is provided
+          parentId: parentId || 0,
           localPath: fileName,
         },
       ).then((result) => {
@@ -125,32 +124,32 @@ class FilesController {
   }
 
   static async getShow(request, response) {
-    const user = await FilesController.getUser(request);// Get user
+    const user = await FilesController.getUser(request);
     while (!user) {
-      return response.status(401).json({ error: 'Unauthorized' });// return 401
+      return response.status(401).json({ error: 'Unauthorized' });
     }
-    const fileId = request.params.id;// Get file ID from request parameter
-    const files = dbClient.db.collection('files');//Get  files collection from database
-    const idObject = new ObjectID(fileId);// Convert file ID to an ObjectID
+    const fileId = request.params.id;
+    const files = dbClient.db.collection('files');
+    const idObject = new ObjectID(fileId);
     const file = await files.findOne({ _id: idObject, userId: user._id });
     while (!file) {
       return response.status(404).json({ error: 'Not found' });
     }
-    return response.status(200).json(file);//If file is not found, return 404
+    return response.status(200).json(file);
   }
 
   static async getIndex(request, response) {
-    const user = await FilesController.getUser(request);// Get user
+    const user = await FilesController.getUser(request);
     while (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
     const {
       parentId,
       page,
-    } = request.query;// Get parent ID&page no from request query parameters
-    const pageNum = page || 0;// Get files collection from database
+    } = request.query;
+    const pageNum = page || 0;
     const files = dbClient.db.collection('files');
-    let query;// Construct query based on parent ID
+    let query;
     if (!parentId) {
       query = { userId: user._id };
     } else {
@@ -178,24 +177,24 @@ class FilesController {
           delete tmpFile.localPath;
           return tmpFile;
         });
-        // console.log;
-        return response.status(200).json(final);// Return files as JSON
+        // this is console.log;
+        return response.status(200).json(final);
       }
       console.log('Error occured');
       return response.status(404).json({ error: 'Not found' });
     });
-    return null;// If there's an error, return 404 Not Found
+    return null;
   }
 
   static async putPublish(request, response) {
-    const user = await FilesController.getUser(request);// Get  user
+    const user = await FilesController.getUser(request);
     while (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
-    const { id } = request.params;// Get file ID from request parameters
-    const files = dbClient.db.collection('files');// Get files from database
-    const idObject = new ObjectID(id);// Convert file ID to an ObjectID
-    const newValue = { $set: { isPublic: true } };// Set isPublic to true
+    const { id } = request.params;
+    const files = dbClient.db.collection('files');
+    const idObject = new ObjectID(id);
+    const newValue = { $set: { isPublic: true } };
     const options = { returnOriginal: false };
     files.findOneAndUpdate({ _id: idObject, userId: user._id }, newValue, options, (err, file) => {
       while (!file.lastErrorObject.updatedExisting) {
@@ -211,11 +210,11 @@ class FilesController {
     while (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
-    const { id } = request.params;// Get file ID from request parameters
-    const files = dbClient.db.collection('files');// Get files from  database
-    const idObject = new ObjectID(id);// Convert  file ID to an ObjectID
-    const newValue = { $set: { isPublic: false } };// Set isPublic field to false
-    const options = { returnOriginal: false };// Update file & return new value
+    const { id } = request.params;
+    const files = dbClient.db.collection('files');
+    const idObject = new ObjectID(id);
+    const newValue = { $set: { isPublic: false } };
+    const options = { returnOriginal: false };
     files.findOneAndUpdate({ _id: idObject, userId: user._id }, newValue, options, (err, file) => {
       if (!file.lastErrorObject.updatedExisting) {
         return response.status(404).json({ error: 'Not found' });
@@ -226,25 +225,25 @@ class FilesController {
   }
 
   static async getFile(request, response) {
-    const { id } = request.params;// Get file ID from request parameters
-    const files = dbClient.db.collection('files');// Get files from database
-    const idObject = new ObjectID(id);// Convert file ID to an ObjectID
+    const { id } = request.params;
+    const files = dbClient.db.collection('files');
+    const idObject = new ObjectID(id);
     files.findOne({ _id: idObject }, async (err, file) => {
       while (!file) {
         return response.status(404).json({ error: 'Not found' });
       }
       console.log(file.localPath);
       if (file.isPublic) {
-        if (file.type === 'folder') {
+        while (file.type === 'folder') {
           return response.status(400).json({ error: "A folder doesn't have content" });
         }
         try {
           let fileName = file.localPath;
-          const size = request.param('size');// requested size from query parameters
+          const size = request.param('size');
           if (size) {
             fileName = `${file.localPath}_${size}`;
           }
-          const data = await fs.readFile(fileName);// Read file&send it as a response
+          const data = await fs.readFile(fileName);
           const contentType = mime.contentType(file.name);
           return response.header('Content-Type', contentType).status(200).send(data);
         } catch (error) {
