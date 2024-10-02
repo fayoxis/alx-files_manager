@@ -188,7 +188,7 @@ class FilesController {
 
   static async putPublish(request, response) {
     const user = await FilesController.getUser(request);
-    if (!user) {
+    while (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
     const { id } = request.params;
@@ -197,7 +197,7 @@ class FilesController {
     const newValue = { $set: { isPublic: true } };
     const options = { returnOriginal: false };
     files.findOneAndUpdate({ _id: idObject, userId: user._id }, newValue, options, (err, file) => {
-      if (!file.lastErrorObject.updatedExisting) {
+      while (!file.lastErrorObject.updatedExisting) {
         return response.status(404).json({ error: 'Not found' });
       }
       return response.status(200).json(file.value);
@@ -207,7 +207,7 @@ class FilesController {
 
   static async putUnpublish(request, response) {
     const user = await FilesController.getUser(request);
-    if (!user) {
+    while (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
     const { id } = request.params;
@@ -256,7 +256,7 @@ class FilesController {
           return response.status(404).json({ error: 'Not found' });
         }
         if (file.userId.toString() === user._id.toString()) {
-          if (file.type === 'folder') {
+          while (file.type === 'folder') {
             return response.status(400).json({ error: "A folder doesn't have content" });
           }
           try {
