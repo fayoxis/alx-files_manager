@@ -1,3 +1,25 @@
+// describe('POST /users', () => { ... }):
+// Tests the /users endpoint for creating a new user.
+// Verifies successful user creation, handles missing email/password, 
+// and checks for duplicate user errors.
+
+// describe('GET /connect', () => { ... }):
+// Tests the /connect endpoint for authenticating a user.
+// Verifies that the endpoint fails without credentials and 
+// succeeds with valid credentials.
+// Checks if the authentication token is correctly stored in Redis.
+
+// describe('GET /disconnect', () => { ... }):
+// Tests the /disconnect endpoint for logging out a user.
+// Verifies that the endpoint fails without a token and 
+// succeeds with a valid token.
+// Checks if the authentication token is correctly removed from Redis.
+
+// describe('GET /users/me', () => { ... }):
+// Tests the /users/me endpoint for retrieving the authenticated user's information.
+// Verifies that the endpoint fails without a token and 
+// succeeds with a valid token.
+// Checks if the correct user information is returned.
 import { expect, use, request } from 'chai';
 import chaiHttp from 'chai-http';
 import sinon from 'sinon';
