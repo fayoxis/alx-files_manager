@@ -1,3 +1,22 @@
+// POST /users endpoint:
+// - Creating a new user successfully
+// - Handling errors when password is missing
+// Handling errors when email is missing
+// Preventing creation of duplicate users
+
+// GET /connect endpoint:
+//  Handling authentication failures
+//  Successful user authentication and token generation
+// Verifying token storage in Redis
+
+// GET /disconnect endpoint:
+//  Handling unauthorized access attempts
+//  Successfully signing out a user
+//  Verifying token removal from Redis after sign out
+
+// GET /users/me endpoint:
+//  Handling unauthorized access attempts
+//  Retrieving user information based on a valid token
 import {
   expect, use, should, request,
 } from 'chai';
