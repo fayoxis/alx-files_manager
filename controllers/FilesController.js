@@ -47,7 +47,6 @@ class FilesController {
       return response.status(400).json({ error: 'Missing data' });
     }
 
-    // Get files collection from database
     const files = dbClient.db.collection('files');
     if (parentId) {
       const idObject = new ObjectID(parentId);
