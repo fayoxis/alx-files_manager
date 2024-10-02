@@ -10,7 +10,7 @@ import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 
 // Create a new job queue named 'userQueue' using Redis
-const userQueue = new Queue('userQueue', 'redis://127.0.0.1:6379');
+const userQueue = new Queue('userQueue', 'redis://127.0.0.1:8080');
 
 class UsersController {
   // Method for creating a new user
