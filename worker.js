@@ -4,8 +4,8 @@ import { promises as fs } from 'fs';
 import { ObjectID } from 'mongodb';
 import dbClient from './utils/db';
 
-const fileQueue = new Queue('fileQueue', 'redis://127.0.0.1:6379');
-const userQueue = new Queue('userQueue', 'redis://127.0.0.1:6379');
+const fileQueue = new Queue('fileQueue', 'redis://127.0.0.1:8080');
+const userQueue = new Queue('userQueue', 'redis://127.0.0.1:8080');
 
 const thumbNail = async (width, localPath) => {
   const thumbnail = await imageThumbnail(localPath, { width });
