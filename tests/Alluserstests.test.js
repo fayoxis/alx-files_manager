@@ -14,7 +14,7 @@ should();
 
 
 describe('testing User Endpoints', () => {
-  const credentials = 'Basic Ym9iQGR5bGFuLmNvbTp0b3RvMTIzNCE='; // Base64 encoded credentials
+  const credentials = 'Basic 5f1e7d35c7ba06511e683b21='; // Base64 encoded credentials
   let token = '';
   let userId = '';
   const user = {
