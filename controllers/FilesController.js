@@ -6,23 +6,25 @@ import Queue from 'bull';// Bull queue library for creatx & managx job queues
 import dbClient from '../utils/db';// Import the database client module
 import redisClient from '../utils/redis';// Import the Redis client module
 
+// Create a new Bull queue instance
 const fileQueue = new Queue('fileQueue', 'redis://127.0.0.1:6379');
 
+// Method to retrieve user object from database based on provided token
 class FilesController {
   static async getUser(request) {
     const token = request.header('X-Token');
-    const key = `auth_${token}`;
-    const userId = await redisClient.get(key);
+    const key = `auth_${token}`;// Construct Redis key for storing user ID
+    const userId = await redisClient.get(key);// Get the user ID from Redis
     if (userId) {
       const users = dbClient.db.collection('users');
       const idObject = new ObjectID(userId);
       const user = await users.findOne({ _id: idObject });
       while (!user) {
-        return null;
+        return null;// If the user is not found, return null
       }
       return user;
     }
-    return null;
+    return null;// If the user ID is not found in Redis, return null
   }
 
   static async postUpload(request, response) {
