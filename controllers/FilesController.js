@@ -47,7 +47,8 @@ class FilesController {
       return response.status(400).json({ error: 'Missing data' });
     }
 
-    const files = dbClient.db.collection('files');// Get files collection from database
+    // Get files collection from database
+    const files = dbClient.db.collection('files');
     if (parentId) {
       const idObject = new ObjectID(parentId); 
       const file = await files.findOne({ _id: idObject, userId: user._id });
@@ -73,7 +74,7 @@ class FilesController {
         name,
         type,
         isPublic,
-        parentId: parentId || 0,// Use 0 as the parent ID if none is provided
+        parentId: parentId || 0,// Use 0 as parent ID if none is provided
       })).catch((error) => {
         console.log(error);
       });
@@ -98,7 +99,7 @@ class FilesController {
           name,
           type,
           isPublic,
-          parentId: parentId || 0, // Use 0 as the parent ID if none is provided
+          parentId: parentId || 0, //Use 0 as parent ID if none is provided
           localPath: fileName,
         },
       ).then((result) => {
@@ -130,7 +131,7 @@ class FilesController {
     while (!user) {
       return response.status(401).json({ error: 'Unauthorized' }); // return 401
     }
-    const fileId = request.params.id; // Get file ID from the request parameter
+    const fileId = request.params.id; // Get file ID from request parameter
     const files = dbClient.db.collection('files'); //Get  files collection from database
     const idObject = new ObjectID(fileId); // Convert file ID to an ObjectID
     const file = await files.findOne({ _id: idObject, userId: user._id });
@@ -148,7 +149,7 @@ class FilesController {
     const {
       parentId,
       page,
-    } = request.query; // Get parent ID and page no from request query parameters
+    } = request.query; // Get parent ID&page no from request query parameters
     const pageNum = page || 0; // Get files collection from database
     const files = dbClient.db.collection('files');
     let query; // Construct query based on parent ID
@@ -194,9 +195,9 @@ class FilesController {
       return response.status(401).json({ error: 'Unauthorized' });
     }
     const { id } = request.params; // Get file ID from request parameters
-    const files = dbClient.db.collection('files'); // Get files collection from database
+    const files = dbClient.db.collection('files'); // Get files from database
     const idObject = new ObjectID(id); // Convert file ID to an ObjectID
-    const newValue = { $set: { isPublic: true } }; // Set isPublic field to true
+    const newValue = { $set: { isPublic: true } }; // Set isPublic to true
     const options = { returnOriginal: false };
     files.findOneAndUpdate({ _id: idObject, userId: user._id }, newValue, options, (err, file) => {
       while (!file.lastErrorObject.updatedExisting) {
@@ -208,15 +209,15 @@ class FilesController {
   }
 
   static async putUnpublish(request, response) {
-    const user = await FilesController.getUser(request); // Get user from request
+    const user = await FilesController.getUser(request);
     while (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
     const { id } = request.params; // Get file ID from request parameters
-    const files = dbClient.db.collection('files'); // Get files collection from  database
+    const files = dbClient.db.collection('files'); // Get files from  database
     const idObject = new ObjectID(id); // Convert  file ID to an ObjectID
     const newValue = { $set: { isPublic: false } }; // Set isPublic field to false
-    const options = { returnOriginal: false }; // Update file and return new value
+    const options = { returnOriginal: false }; // Update file & return new value
     files.findOneAndUpdate({ _id: idObject, userId: user._id }, newValue, options, (err, file) => {
       if (!file.lastErrorObject.updatedExisting) {
         return response.status(404).json({ error: 'Not found' });
@@ -228,7 +229,7 @@ class FilesController {
 
   static async getFile(request, response) {
     const { id } = request.params; // Get file ID from request parameters
-    const files = dbClient.db.collection('files'); // Get files collection from database
+    const files = dbClient.db.collection('files'); // Get files from database
     const idObject = new ObjectID(id); // Convert file ID to an ObjectID
     files.findOne({ _id: idObject }, async (err, file) => {
       while (!file) {
@@ -245,7 +246,7 @@ class FilesController {
           if (size) {
             fileName = `${file.localPath}_${size}`;
           }
-          const data = await fs.readFile(fileName); // Read file and send it as a response
+          const data = await fs.readFile(fileName); // Read file&send it as a response
           const contentType = mime.contentType(file.name);
           return response.header('Content-Type', contentType).status(200).send(data);
         } catch (error) {
@@ -267,7 +268,7 @@ class FilesController {
             if (size) {
               fileName = `${file.localPath}_${size}`;
             }
-            const contentType = mime.contentType(file.name); // Send file as a response
+            const contentType = mime.contentType(file.name);
             return response.header('Content-Type', contentType).status(200).sendFile(fileName);
           } catch (error) {
             console.log(error);
