@@ -1,0 +1,216 @@
+// Successful File Post:
+// Posting a file with parentId set to 0.
+// Posting a file with a specific valid parentId.
+
+// Unauthorized Posts:
+// Using an invalid token for authentication.
+
+// Validation Errors:
+// Missing the name field.
+// Missing the type field.
+// Missing the data field.
+// Providing an invalid parentId that does
+// not link to any existing document.
+// Using a parentId that refers to a file instead of a folder.
+import fs from 'fs';
+import chai, { expect, request } from 'chai';
+import chaiHttp from 'chai-http';
+import sha1 from 'sha1';
+import { ObjectId, MongoClient } from 'mongodb';
+import { createClient } from 'redis';
+import { promisify } from 'util';
+import { v4 } from 'uuid';
+import app from '../server';
+
+chai.use(chaiHttp);
+
+describe('FileController.js tests - file upload endpoint', () => {
+  let dbClient, db, rdClient, asyncSet, asyncKeys, asyncDel;
+  const DB_HOST = process.env.DB_HOST || '';
+  const DB_PORT = process.env.BD_PORT || '';
+  const DATABASE = process.env.DB_DATABASE || '';
+  const initialPassword = '';
+  const hashedPassword = sha1(initialPassword);
+  const user = { _id: new ObjectId(),  email: 'bob@dylan.com', password: toto1234 };
+  const token = v4();
+  const tokenKey = `auth_${token}`;
+  const folder = {
+    _id: new ObjectId(),
+    name: 'poems',
+    type: 'folder',
+    parentId: '0',
+    userId: user._id,
+    isPublic: false,
+  };
+
+  before(() => new Promise((resolve) => {
+    dbClient = new MongoClient(`mongodb://${DB_HOST}:${DB_PORT}`, { useUnifiedTopology: true });
+    dbClient.connect(async (error, client) => {
+      if (error) throw error;
+      db = await client.db(DATABASE);
+      await db.collection('users').deleteMany({});
+      await db.collection('users').insertOne(user);
+      await db.collection('files').insertOne(folder);
+      rdClient = createClient();
+      asyncSet = promisify(rdClient.set).bind(rdClient);
+      asyncKeys = promisify(rdClient.keys).bind(rdClient);
+      asyncDel = promisify(rdClient.del).bind(rdClient);
+      rdClient.on('connect', async () => {
+        await asyncSet(tokenKey, user._id.toString());
+        resolve();
+      });
+    });
+  }));
+
+  after(async () => {
+    fs.rmdirSync(FOLDER_PATH, { recursive: true });
+    await db.collection('users').deleteMany({});
+    await db.collection('files').deleteMany({});
+    await db.dropDatabase();
+    await dbClient.close();
+    const tokens = await asyncKeys('auth_*');
+    const thumbnailJobs = await asyncKeys('bull*')
+    const deleteKeysOperations = [...tokens, ...thumbnailJobs].map(asyncDel);
+    await Promise.all(deleteKeysOperations);
+    rdClient.quit();
+  });
+
+  describe('POST /files', () => {
+    let file;
+    const data = Buffer.from('Hello World').toString('base64');
+
+    beforeEach(() => {
+      file = {
+        name: Math.random().toString(32).substring(2),
+        type: 'file',
+        isPublic: false,
+        data: data,
+      };
+    });
+
+    it('should add a file to the database with parentId=0', (done) => {
+      request(app)
+        .post('/files')
+        .set('X-Token', token)
+        .send(file)
+        .end((error, res) => {
+          const responseAttributes = ['id', 'userId', 'name', 'type', 'isPublic', 'parentId'];
+          expect(error).to.be.null;
+          expect(res).to.have.status(201);
+          expect(res.body).to.include.all.keys(responseAttributes);
+          expect(res.body.name).to.equal(file.name);
+          expect(res.body.type).to.equal(file.type);
+          expect(res.body.isPublic).to.equal(file.isPublic);
+          expect(res.body.parentId).to.equal(0);
+          expect(fs.existsSync(FOLDER_PATH)).to.be.true;
+          expect(fs.lstatSync(FOLDER_PATH).isDirectory()).to.be.true;
+          expect(fs.readdirSync(FOLDER_PATH)).to.have.lengthOf.greaterThan(0);
+          done();
+        });
+    });
+
+    it('should add a file to the database with a given parentId', (done) => {
+      file.parentId = folder._id.toString();
+      request(app)
+        .post('/files')
+        .set('X-Token', token)
+        .send(file)
+        .end((error, res) => {
+          expect(error).to.be.null;
+          expect(res).to.have.status(201);
+          expect(res.body.parentId).to.equal(folder._id.toString());
+          expect(fs.readdirSync(FOLDER_PATH).length).to.equal(2);
+          done();
+        });
+    });
+
+    it('should unauthorize uploads using wrong token', (done) => {
+      request(app)
+        .post('/files')
+        .set('X-Token', v4())
+        .send(file)
+        .end((error, res) => {
+          expect(error).to.be.null;
+          expect(res).to.have.status(401);
+          expect(res.body.error).to.equal('Unauthorized');
+          done();
+        });
+    });
+
+    it('should unauthorize uploads with missing name', (done) => {
+      delete file.name;
+      request(app)
+        .post('/files')
+        .set('X-Token', token)
+        .send(file)
+        .end((error, res) => {
+          expect(error).to.be.null;
+          expect(res).to.have.status(400);
+          expect(res.body.error).to.equal('Missing name');
+          done();
+        });
+    });
+
+    it('should unauthorize uploads with missing type', (done) => {
+      delete file.type;
+      request(app)
+        .post('/files')
+        .set('X-Token', token)
+        .send(file)
+        .end((error, res) => {
+          expect(error).to.be.null;
+          expect(res).to.have.status(400);
+          expect(res.body.error).to.equal('Missing type');
+          done();
+        });
+    });
+
+    it('should unauthorize uploads with missing data if they are files', (done) => {
+      delete file.data;
+      request(app)
+        .post('/files')
+        .set('X-Token', token)
+        .send(file)
+        .end((error, res) => {
+          expect(error).to.be.null;
+          expect(res).to.have.status(400);
+          expect(res.body.error).to.equal('Missing data');
+          done();
+        });
+    });
+
+    it('should unauthorize uploads if parentId is not linked to any document', (done) => {
+      file.parentId = new ObjectId().toString();
+      request(app)
+        .post('/files')
+        .set('X-Token', token)
+        .send(file)
+        .end((error, res) => {
+          expect(error).to.be.null;
+          expect(res).to.have.status(400);
+          expect(res.body.error).to.equal('Parent not found');
+          done();
+        });
+    });
+
+    it('should unauthorize uploads if parentId is for a file or image and not a folder', (done) => {
+      request(app)
+        .post('/files')
+        .set('X-Token', token)
+        .send(file)
+        .end((_error, res) => {
+          file.parentId = res.body.id;
+          request(app)
+            .post('/files')
+            .set('X-Token', token)
+            .send(file)
+            .end((error, res) => {
+              expect(error).to.be.null;
+              expect(res).to.have.status(400);
+              expect(res.body.error).to.equal('Parent is not a folder');
+              done();
+            });
+        });
+    });
+  });
+});
