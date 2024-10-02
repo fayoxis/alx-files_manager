@@ -1,3 +1,13 @@
+// For the Redis client:
+// It tests the isAlive() method
+// It checks the get() method for a non-existent key
+// It tests the set() method to add a key-value pair with expiration
+// It verifies that the key expires after the set time
+
+// For the database client:
+// It tests the isAlive() method
+// It checks the nbUsers() method to count user documents
+// It verifies the nbFiles() method to count file documents
 import { expect, use, should } from 'chai';
 import chaiHttp from 'chai-http';
 import { promisify } from 'util';
