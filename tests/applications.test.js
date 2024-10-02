@@ -1,50 +1,36 @@
-import {
-  expect, use, should, request,
-} from 'chai';
+import { expect, use, request } from 'chai';
 import chaiHttp from 'chai-http';
 import app from '../server';
 import dbClient from '../utils/db';
 
 use(chaiHttp);
-should();
 
-// General APP Endpoints ==============================================
-
-describe('testing App Status Endpoints', () => {
-  describe('gET /status', () => {
-    it('returns the status of redis and mongo connection', async () => {
-      const response = await request(app).get('/status').send();
-      const body = JSON.parse(response.text);
-
-      expect(body).to.eql({ redis: true, db: true });
-      expect(response.statusCode).to.equal(200);
-    });
+describe('App Status Endpoints', () => {
+  it('GET /status returns redis and mongo connection status', async () => {
+    const res = await request(app).get('/status');
+    expect(res.body).to.eql({ redis: true, db: true });
+    expect(res.status).to.equal(200);
   });
 
-  describe('gET /stats', () => {
-    before(async () => {
+  describe('GET /stats', () => {
+    beforeEach(async () => {
       await dbClient.usersCollection.deleteMany({});
       await dbClient.filesCollection.deleteMany({});
     });
 
-    it('returns number of users and files in db 0 for this one', async () => {
-      const response = await request(app).get('/stats').send();
-      const body = JSON.parse(response.text);
-
-      expect(body).to.eql({ users: 0, files: 0 });
-      expect(response.statusCode).to.equal(200);
+    it('returns 0 users and files when empty', async () => {
+      const res = await request(app).get('/stats');
+      expect(res.body).to.eql({ users: 0, files: 0 });
+      expect(res.status).to.equal(200);
     });
 
-    it('returns number of users and files in db 1 and 2 for this one', async () => {
+    it('returns correct user and file count', async () => {
       await dbClient.usersCollection.insertOne({ name: 'Larry' });
-      await dbClient.filesCollection.insertOne({ name: 'image.png' });
-      await dbClient.filesCollection.insertOne({ name: 'file.txt' });
+      await dbClient.filesCollection.insertMany([{ name: 'image.png' }, { name: 'file.txt' }]);
 
-      const response = await request(app).get('/stats').send();
-      const body = JSON.parse(response.text);
-
-      expect(body).to.eql({ users: 1, files: 2 });
-      expect(response.statusCode).to.equal(200);
+      const res = await request(app).get('/stats');
+      expect(res.body).to.eql({ users: 1, files: 2 });
+      expect(res.status).to.equal(200);
     });
   });
 });
