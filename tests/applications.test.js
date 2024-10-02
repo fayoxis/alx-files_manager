@@ -1,3 +1,17 @@
+// The code tests the following:
+// GET /status**
+//  Checks that the endpoint returns the correct connection status 
+//  for Redis and MongoDB.
+//  Expects a response body of `{ redis: true, db: true }` 
+//   and a status code of `200`.
+//
+//  GET /stats**
+//   When empty**: Verifies that the endpoint returns `0` 
+//   users and `0` files when the database is empty. Expects 
+//   { users: 0, files: 0 }` and a status code of `200`.
+//   After adding data**: Ensures that the endpoint returns 
+//   the correct counts after inserting one user and two files. 
+//   Expects `{ users: 1, files: 2 }` and a status code of `200`.
 import { expect, use, request } from 'chai';
 import chaiHttp from 'chai-http';
 import app from '../server';
