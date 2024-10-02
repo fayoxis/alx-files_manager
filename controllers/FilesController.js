@@ -131,11 +131,11 @@ class FilesController {
       return response.status(401).json({ error: 'Unauthorized' });// return 401
     }
     const fileId = request.params.id;// Get file ID from request parameter
-    const files = dbClient.db.collection('files');//Get  files collection from database
+    const files = dbClient.db.collection('files');//Get files from database
     const idObject = new ObjectID(fileId);// Convert file ID to an ObjectID
     const file = await files.findOne({ _id: idObject, userId: user._id });
     while (!file) {
-      return response.status(404).json({ error: 'Not found' });//If file is not found, return 404
+      return response.status(404).json({ error: 'Not found' });//not found, return 404
     }
     return response.status(200).json(file);
   }
