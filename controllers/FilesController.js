@@ -28,11 +28,11 @@ class FilesController {
   }
 
   static async postUpload(request, response) {
-    const user = await FilesController.getUser(request);
+    const user = await FilesController.getUser(request);// user object
     while (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
-    const { name } = request.body;
+    const { name } = request.body;// Get file details from request body
     const { type } = request.body;
     const { parentId } = request.body;
     const isPublic = request.body.isPublic || false;
@@ -47,6 +47,7 @@ class FilesController {
       return response.status(400).json({ error: 'Missing data' });
     }
 
+    // Get files collection from database
     const files = dbClient.db.collection('files');
     if (parentId) {
       const idObject = new ObjectID(parentId);
@@ -73,7 +74,7 @@ class FilesController {
         name,
         type,
         isPublic,
-        parentId: parentId || 0,
+        parentId: parentId || 0,//Use 0 as parent ID if none is provided
       })).catch((error) => {
         console.log(error);
       });
@@ -98,7 +99,7 @@ class FilesController {
           name,
           type,
           isPublic,
-          parentId: parentId || 0,
+          parentId: parentId || 0,//Use 0 as parent ID if none is provided
           localPath: fileName,
         },
       ).then((result) => {
@@ -126,7 +127,7 @@ class FilesController {
   }
 
   static async getShow(request, response) {
-    const user = await FilesController.getUser(request);
+    const user = await FilesController.getUser(request);// Get user
     while (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
