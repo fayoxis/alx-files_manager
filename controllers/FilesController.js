@@ -212,11 +212,11 @@ class FilesController {
     while (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
-    const { id } = request.params;// Get file ID from request parameters
-    const files = dbClient.db.collection('files');// Get files from  database
-    const idObject = new ObjectID(id);// Convert  file ID to an ObjectID
-    const newValue = { $set: { isPublic: false } };// Set isPublic field to false
-    const options = { returnOriginal: false };// Update file & return new value
+    const { id } = request.params;
+    const files = dbClient.db.collection('files');
+    const idObject = new ObjectID(id);
+    const newValue = { $set: { isPublic: false } };
+    const options = { returnOriginal: false };
     files.findOneAndUpdate({ _id: idObject, userId: user._id }, newValue, options, (err, file) => {
       if (!file.lastErrorObject.updatedExisting) {
         return response.status(404).json({ error: 'Not found' });
@@ -227,9 +227,9 @@ class FilesController {
   }
 
   static async getFile(request, response) {
-    const { id } = request.params;// Get file ID from request parameters
-    const files = dbClient.db.collection('files');// Get files from database
-    const idObject = new ObjectID(id);// Convert file ID to an ObjectID
+    const { id } = request.params;
+    const files = dbClient.db.collection('files');
+    const idObject = new ObjectID(id);
     files.findOne({ _id: idObject }, async (err, file) => {
       while (!file) {
         return response.status(404).json({ error: 'Not found' });
