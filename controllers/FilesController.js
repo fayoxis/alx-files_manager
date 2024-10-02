@@ -128,32 +128,32 @@ class FilesController {
   static async getShow(request, response) {
     const user = await FilesController.getUser(request);// Get user
     while (!user) {
-      return response.status(401).json({ error: 'Unauthorized' });// return 401
+      return response.status(401).json({ error: 'Unauthorized' });
     }
-    const fileId = request.params.id;// Get file ID from request parameter
-    const files = dbClient.db.collection('files');//Get  files collection from database
-    const idObject = new ObjectID(fileId);// Convert file ID to an ObjectID
+    const fileId = request.params.id;
+    const files = dbClient.db.collection('files');
+    const idObject = new ObjectID(fileId);
     const file = await files.findOne({ _id: idObject, userId: user._id });
     while (!file) {
-      return response.status(404).json({ error: 'Not found' });//If file is not found, return 404
+      return response.status(404).json({ error: 'Not found' });
     }
     return response.status(200).json(file);
   }
 
   static async getIndex(request, response) {
-    const user = await FilesController.getUser(request);// Get user
+    const user = await FilesController.getUser(request);
     while (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
     const {
       parentId,
       page,
-    } = request.query;// Get parent ID&page no from request query parameters
-    const pageNum = page || 0;// Get files collection from database
+    } = request.query;
+    const pageNum = page || 0;
     const files = dbClient.db.collection('files');
     let query;
     if (!parentId) {
-      query = { userId: user._id };// Construct query based on parent ID
+      query = { userId: user._id };
     } else {
       query = { userId: user._id, parentId: ObjectID(parentId) };
     }
@@ -180,12 +180,12 @@ class FilesController {
           return tmpFile;
         });
         // this is console.log;
-        return response.status(200).json(final);// Return files as JSON
+        return response.status(200).json(final);
       }
       console.log('Error occured');
       return response.status(404).json({ error: 'Not found' });
     });
-    return null;// If there's an error, return 404 Not Found
+    return null;
   }
 
   static async putPublish(request, response) {
