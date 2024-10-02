@@ -141,14 +141,14 @@ class FilesController {
   }
 
   static async getIndex(request, response) {
-    const user = await FilesController.getUser(request);// Get user
+    const user = await FilesController.getUser(request);
     while (!user) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
     const {
       parentId,
       page,
-    } = request.query;// Get parent ID&page no from request query parameters
+    } = request.query;
     const pageNum = page || 0;// Get files collection from database
     const files = dbClient.db.collection('files');
     let query;
@@ -180,7 +180,7 @@ class FilesController {
           return tmpFile;
         });
         // this is console.log;
-        return response.status(200).json(final);// Return files as JSON
+        return response.status(200).json(final);
       }
       console.log('Error occured');
       return response.status(404).json({ error: 'Not found' });
