@@ -243,9 +243,9 @@ class FilesController {
           let fileName = file.localPath;
           const size = request.param('size');
           if (size) {
-            fileName = `${file.localPath}_${size}`;//size from query parameters
+            fileName = `${file.localPath}_${size}`;
           }
-          const data = await fs.readFile(fileName);// Read file&send it as a response
+          const data = await fs.readFile(fileName);
           const contentType = mime.contentType(file.name);
           return response.header('Content-Type', contentType).status(200).send(data);
         } catch (error) {
